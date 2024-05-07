@@ -8,6 +8,8 @@ build
 *.lib
 *.ppu
 *.zip
+*.kra
+*.png.kra
 
 .vscode/
 __pycache__/
