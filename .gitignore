@@ -4,6 +4,12 @@
 **/chisl_metod/*/*/*/trash/
 trash
 
+*.exe
+*.obj
+*.dll
+*.lib
+*.ppu
+
 .vscode/
 __pycache__/
 *.pyc
