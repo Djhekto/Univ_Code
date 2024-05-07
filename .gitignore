@@ -1,14 +1,13 @@
-**/trash/
-**/chisl_metod/*/trash/
-**/chisl_metod/*/*/trash/
-**/chisl_metod/*/*/*/trash/
+
 trash
+build
 
 *.exe
 *.obj
 *.dll
 *.lib
 *.ppu
+*.zip
 
 .vscode/
 __pycache__/

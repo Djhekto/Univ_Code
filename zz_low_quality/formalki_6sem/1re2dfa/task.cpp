@@ -1,0 +1,254 @@
+#include "api.hpp"
+#include <string>
+#include <iostream>
+#include <vector>
+#include <set>
+#include <algorithm>
+#include <cctype>
+
+std::vector<std::set<int>> followpos;
+std::vector<int> symbol_index, symbol_priority, char_index ;
+
+class binaryTree {
+public:
+    binaryTree *left_tree  = nullptr;
+    binaryTree *right_tree = nullptr;
+    int index;
+    char symbol;
+    bool symbtoeps = NULL;
+    std::set<int> firstpos, lastpos;
+
+
+    binaryTree(char symbol, int index, binaryTree *left_tree, binaryTree *right_tree) : symbol(symbol), index(index), left_tree(left_tree), right_tree(right_tree) {}
+
+    ~binaryTree() { delete left_tree; delete right_tree; }
+
+    void get_tree_node_info() {
+        if (left_tree  != nullptr) { left_tree ->get_tree_node_info(); }
+        if (right_tree != nullptr) { right_tree->get_tree_node_info(); }
+
+        if (symbol == '\n')   { symbtoeps = true; }
+        else if (std::isalnum(symbol)) { symbtoeps = symbol == '#';
+                firstpos.insert(index); lastpos.insert(index);}
+        else switch (symbol)
+        {
+        case '|':
+            symbtoeps = left_tree->symbtoeps || right_tree->symbtoeps;
+            firstpos = left_tree->firstpos;
+            firstpos.insert(right_tree->firstpos.begin(), right_tree->firstpos.end());
+            lastpos = left_tree->lastpos;
+            lastpos.insert(right_tree->lastpos.begin(), right_tree->lastpos.end());
+            break;
+        case '.':
+            symbtoeps = left_tree->symbtoeps && right_tree->symbtoeps;
+            firstpos = left_tree->firstpos;
+            if (left_tree->symbtoeps) { firstpos.insert(right_tree->firstpos.begin(), right_tree->firstpos.end()); }
+            lastpos = right_tree->lastpos;
+            if (right_tree->symbtoeps) { lastpos.insert(left_tree->lastpos.begin(), left_tree->lastpos.end()); } 
+            break;
+        case '*':
+            symbtoeps = true;
+            firstpos = left_tree->firstpos;  lastpos = left_tree->lastpos;
+            break;
+        default:
+            symbtoeps = symbol == '#';
+            firstpos.insert(index); lastpos.insert(index);
+            break;
+        }
+
+    };
+
+    void calculate_followpos() {
+        if (left_tree  != nullptr) { left_tree ->calculate_followpos(); }
+        if (right_tree != nullptr) { right_tree->calculate_followpos(); }
+
+        switch (symbol)
+        {
+        case '*':
+            for (auto &item: left_tree->lastpos) {
+                followpos[item].insert(left_tree->firstpos.begin(), left_tree->firstpos.end());
+            }
+            break;
+        case '.':
+            for (auto &item: left_tree->lastpos) {
+                followpos[item].insert(right_tree->firstpos.begin(), right_tree->firstpos.end());
+            }
+            break;
+        //default:
+        //    break;
+        }
+    }
+
+};
+
+binaryTree *get_tree_min(const std::string &s, int start_pointer, int end_pointer) {
+    int offset = 0;
+    while (s[start_pointer + offset] == '(' && s[end_pointer - offset] == ')') {
+        int ii = 0;
+        int end_min_fun = 0;
+        offset += 1;
+        for (char &symbol: s.substr(start_pointer + offset, end_pointer - start_pointer + 1 - 2 * offset)) {
+            switch (symbol) {
+            case '(':
+                ii++;
+                break;
+            case ')':
+                ii--;
+                if (ii < 0) {
+                    end_min_fun= 1;
+                    offset--;
+                    break;
+            //default:
+            //    break;
+                }
+                break;      }
+        }
+        if (end_min_fun == 1) { break; }
+    }
+
+    int min_index = -1;
+    end_pointer -= offset;
+    start_pointer += offset;
+
+    for (int i = 0; i < symbol_index.size(); i++) {
+        if (symbol_index[i] < start_pointer) {
+            continue;
+        }
+        if (symbol_index[i] > end_pointer) {
+            break;
+        }
+        if (symbol_priority[i] != 0) {
+            if (min_index == -1 || symbol_priority[i] <= symbol_priority[min_index]) {
+                min_index = i;
+            }
+        }
+    }
+    binaryTree *tree = nullptr;
+    if (min_index != -1) {
+        char cur_operator = s[symbol_index[min_index]];
+        if (cur_operator == '|' || cur_operator == '.' || cur_operator == '*') {
+            tree = new binaryTree(cur_operator, 0, nullptr, nullptr);
+            tree->left_tree = get_tree_min(s, start_pointer, symbol_index[min_index] - 1);
+            if (cur_operator == '|' || cur_operator == '.') {
+                tree->right_tree = get_tree_min(s, symbol_index[min_index] + 1, end_pointer);
+            }
+        } 
+    } else {
+        if (start_pointer == end_pointer) {
+            int index_in_char_index = 0;
+            while (char_index[index_in_char_index] != start_pointer) {
+                index_in_char_index++;
+            }
+            tree = new binaryTree(s[start_pointer], index_in_char_index, nullptr, nullptr);
+        } else if (start_pointer > end_pointer) {
+            tree = new binaryTree('\n', -1, nullptr, nullptr);
+        } 
+    }
+
+    return tree;
+}
+
+
+binaryTree *get_tree_new(const std::string &s) {
+    symbol_index = std::vector<int>();
+    char_index     = std::vector<int>();
+    int cur_priority = 0;
+
+    for (int i = 0; i < s.size(); i++) {
+        if (isalnum(s[i]) || s[i] == '#') { char_index.push_back(i); }
+        else { symbol_index.push_back(i); }  }
+
+    symbol_priority = std::vector<int>(symbol_index.size());
+    for (int i = 0; i < symbol_index.size(); i++) {
+        switch (s[symbol_index[i]])
+        {
+        case '(':
+            cur_priority += 4;
+            symbol_priority[i] = 0;
+            break;
+        case ')':
+            cur_priority -= 4;
+            symbol_priority[i] = 0;
+            break;
+        case '|':
+            symbol_priority[i] = 1 + cur_priority;
+            break;
+        case '.':
+            symbol_priority[i] = 2 + cur_priority;
+            break;
+        case '*':
+            symbol_priority[i] = 3 + cur_priority;
+            break;     
+        //default:
+        //    break;
+        }
+    }
+
+    return get_tree_min(s, 0, s.size() - 1);
+}
+
+DFA re2dfa(const std::string &s) {
+    int iii = 0;
+    for(int i = 0; i < s.size(); i++) 
+    {  
+        if (isalnum(s[i])!=0) iii+=1; 
+        }
+    printf("%d",iii);
+    //if (iii<1)
+        // { //printf("1");
+            // Alphabet a1 = Alphabet("fuckthis");
+            // DFA otvet = DFA(a1); 
+            // return otvet;
+        // }
+    std::string s1 = '(' + s + ")#";
+
+    for (int i = s1.size() - 1; i > 0; i--) {
+        if (s1[i] != '*' && s1[i] != '|' && s1[i - 1] != '|' && s1[i] != ')' && s1[i - 1] != '(') {  s1.insert(i, "."); }
+    } 
+
+    Alphabet alphabet = Alphabet(s);
+    DFA otvet = DFA(alphabet);
+    std::vector<std::set<int>> states;
+
+    binaryTree *root = get_tree_new(s1);
+    root->get_tree_node_info();
+
+    followpos = std::vector<std::set<int>>(char_index.size());
+    std::vector<std::set<int>> &followpos1 = followpos;
+    std::vector<int> &char_index1 = char_index;
+
+    root->calculate_followpos();
+    states.push_back(root->firstpos);
+
+    otvet.create_state(std::to_string(0), root->symbtoeps);
+    otvet.set_initial(std::to_string(0));
+    for (int index = 0; index < states.size(); index++) {
+        for (auto &alpha_from_alphabet: alphabet) {
+            std::set<int> new_state;
+            for (auto &index_alpha_in_cur_state: states[index]) {
+                if (s1[char_index[index_alpha_in_cur_state]] == alpha_from_alphabet) {
+                    new_state.insert(followpos[index_alpha_in_cur_state].begin(),
+                                     followpos[index_alpha_in_cur_state].end());
+                }
+            }
+
+            if (!new_state.empty()) {
+                int index_to = 0;
+                for (; index_to < states.size(); index_to++) {
+                    if (states[index_to] == new_state) {
+                        break;
+                    }
+                } //existing state
+                if (index_to == states.size()) {
+                    //new state
+                    index_to = states.size();
+                    states.push_back(new_state);
+                    otvet.create_state(std::to_string(index_to), new_state.count(char_index.size() - 1) == 1);
+                }
+                otvet.set_trans(std::to_string(index), alpha_from_alphabet, std::to_string(index_to));
+            }
+        }
+    }
+
+    return otvet;
+}
