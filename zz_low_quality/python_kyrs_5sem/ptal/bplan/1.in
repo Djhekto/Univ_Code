@@ -1,0 +1,14 @@
+async def sender(names, notify):
+    for name in names:
+        notify.set(name)
+        await asyncio.sleep(0.03)
+        notify.clear()
+    notify.set()
+
+async def main():
+    notify = NotifyEvent()
+    tasks = {n: task(n, notify) for n in "12"}
+    targets = "1", "2", "2", "2", "2", "1", "2", "1", "1"
+    await asyncio.gather(*(list(tasks.values()) + [sender(targets, notify)]))
+
+asyncio.run(main())

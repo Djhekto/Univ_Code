@@ -1,0 +1,76 @@
+1	from itertools import product	t	1	from itertools import product
+2	import sys		2	import sys
+3	possible_encodings = ['cp037', 'cp1006', 'cp1250', 'cp1251', 'cp1253', 'cp1254', 'cp1255', 'cp1256', 'cp1257', 'cp1258', 'cp437', 'cp720', 'cp737', 'cp775', 'cp850', 'cp852', 'cp855', 'cp864', 'cp866', 'cp869', 'cp874', 'cp875', 'hp_roman8', 'iso8859_10', 'iso8859_16', 'iso8859_4', 'iso8859_5', 'koi8_r', 'latin_1', 'mac_croatian', 'mac_greek', 'mac_iceland', 'mac_latin2']		3	possible_encodings = ['cp037', 'cp1006', 'cp1250', 'cp1251', 'cp1253', 'cp1254', 'cp1255', 'cp1256', 'cp1257', 'cp1258', 'cp437', 'cp720', 'cp737', 'cp775', 'cp850', 'cp852', 'cp855', 'cp864', 'cp866', 'cp869', 'cp874', 'cp875', 'hp_roman8', 'iso8859_10', 'iso8859_16', 'iso8859_4', 'iso8859_5', 'koi8_r', 'latin_1', 'mac_croatian', 'mac_greek', 'mac_iceland', 'mac_latin2']
+5			5	
+6	def main():		6	def main():
+7	    buffer = sys.stdin.read().strip()		7	    buffer = sys.stdin.read().strip()
+8	    head_tail = buffer[:4] + buffer[-4:]		8	    head_tail = buffer[:4] + buffer[-4:]
+9	    if head_tail == 'ПРОЦКНЦ;':		9	    if head_tail == 'ПРОЦКНЦ;':
+10	        print(buffer)		10	        print(buffer)
+11	        return		11	        return
+12	    if 'KM' in head_tail or '×{´F' in head_tail:		12	    if 'KM' in head_tail or '×{´F' in head_tail:
+13	        buffer = buffer.split('%')		13	        buffer = buffer.split('%')
+14	    else:		14	    else:
+15	        buffer = buffer.split('\n')		15	        buffer = buffer.split('\n')
+16	    possible_pairs = {}		16	    possible_pairs = {}
+17	    for (e1, e2) in product(possible_encodings, repeat=2):		17	    for (e1, e2) in product(possible_encodings, repeat=2):
+18	        if e1 == e2:		18	        if e1 == e2:
+19	            continue		19	            continue
+20	        try:		20	        try:
+21	            t1 = alp.decode(e1).encode(e2)		21	            t1 = alp.decode(e1).encode(e2)
+22	            codings = ((e2, e1),)		22	            codings = ((e2, e1),)
+23	            possible_pairs[codings] = t1		23	            possible_pairs[codings] = t1
+24	            if head_tail.encode(e1).decode('koi8_r') == 'ПРОЦКНЦ;':		24	            if head_tail.encode(e1).decode('koi8_r') == 'ПРОЦКНЦ;':
+25	                res = []		25	                res = []
+26	                for line in buffer:		26	                for line in buffer:
+27	                    res.append(line.encode(e1, errors='ignore').decode('koi8_r', errors='ignore'))		27	                    res.append(line.encode(e1, errors='ignore').decode('koi8_r', errors='ignore'))
+28	                print('\n'.join(res))		28	                print('\n'.join(res))
+29	                return		29	                return
+30	        except UnicodeEncodeError:		30	        except UnicodeEncodeError:
+31	            continue		31	            continue
+32	        except UnicodeDecodeError:		32	        except UnicodeDecodeError:
+33	            continue		33	            continue
+34	    possible_pairs_2 = {}		34	    possible_pairs_2 = {}
+35	    for (pair, buff) in possible_pairs.items():		35	    for (pair, buff) in possible_pairs.items():
+36	        for (e1, e2) in product(possible_encodings, repeat=2):		36	        for (e1, e2) in product(possible_encodings, repeat=2):
+37	            if e1 == e2:		37	            if e1 == e2:
+38	                continue		38	                continue
+39	            try:		39	            try:
+40	                if pair[0][0] == e1:		40	                if pair[0][0] == e1:
+41	                    continue		41	                    continue
+42	                t1 = buff.decode(e1).encode(e2)		42	                t1 = buff.decode(e1).encode(e2)
+43	                codings = ((e2, e1),) + pair		43	                codings = ((e2, e1),) + pair
+44	                possible_pairs_2[codings] = t1		44	                possible_pairs_2[codings] = t1
+45	                ((c1, c2), (c3, c4)) = codings		45	                ((c1, c2), (c3, c4)) = codings
+46	                if head_tail.encode(c2).decode(c3).encode(c4).decode('koi8_r') == 'ПРОЦКНЦ;':		46	                if head_tail.encode(c2).decode(c3).encode(c4).decode('koi8_r') == 'ПРОЦКНЦ;':
+47	                    res = []		47	                    res = []
+48	                    for line in buffer:		48	                    for line in buffer:
+49	                        res.append(line.encode(c2).decode(c3).encode(c4).decode('koi8_r'))		49	                        res.append(line.encode(c2).decode(c3).encode(c4).decode('koi8_r'))
+50	                    print('\n'.join(res))		50	                    print('\n'.join(res))
+51	                    return		51	                    return
+52	            except UnicodeEncodeError:		52	            except UnicodeEncodeError:
+53	                continue		53	                continue
+54	            except UnicodeDecodeError:		54	            except UnicodeDecodeError:
+55	                continue		55	                continue
+56	    for (pair, buff) in possible_pairs_2.items():		56	    for (pair, buff) in possible_pairs_2.items():
+57	        for (e1, e2) in product(possible_encodings, repeat=2):		57	        for (e1, e2) in product(possible_encodings, repeat=2):
+58	            if e1 == e2:		58	            if e1 == e2:
+59	                continue		59	                continue
+60	            try:		60	            try:
+61	                if pair[0][0] == e1:		61	                if pair[0][0] == e1:
+62	                    continue		62	                    continue
+63	                t1 = buff.decode(e1).encode(e2)		63	                t1 = buff.decode(e1).encode(e2)
+64	                codings = ((e2, e1),) + pair		64	                codings = ((e2, e1),) + pair
+65	                ((c1, c2), (c3, c4), (c5, c6)) = codings		65	                ((c1, c2), (c3, c4), (c5, c6)) = codings
+66	                if head_tail.encode(c2).decode(c3).encode(c4).decode(c5).encode(c6).decode('koi8_r') == 'ПРОЦКНЦ;':		66	                if head_tail.encode(c2).decode(c3).encode(c4).decode(c5).encode(c6).decode('koi8_r') == 'ПРОЦКНЦ;':
+67	                    res = []		67	                    res = []
+68	                    for line in buffer:		68	                    for line in buffer:
+69	                        res.append(line.encode(c2).decode(c3).encode(c4).decode(c5).encode(c6).decode('koi8_r'))		69	                        res.append(line.encode(c2).decode(c3).encode(c4).decode(c5).encode(c6).decode('koi8_r'))
+70	                    print('\n'.join(res))		70	                    print('\n'.join(res))
+71	                    return		71	                    return
+72	            except UnicodeEncodeError:		72	            except UnicodeEncodeError:
+73	                continue		73	                continue
+74	            except UnicodeDecodeError:		74	            except UnicodeDecodeError:
+75	                continue		75	                continue
+76	if __name__ == '__main__':		76	if __name__ == '__main__':
+77	    main()

@@ -1,0 +1,22 @@
+x, a, c, m = 6, 84589, 45989, 217728
+stat = statcounter()
+stats = next(stat)
+
+N = 0o10000
+
+@stat.send
+def evaller(expr):
+    return eval(expr)
+
+for i in range(N):
+    exec(f"""
+@stat.send
+def f_{i^0o32}(a): return a+{i}
+    """)
+
+for i in range(N * 10):
+    x=(a*x+c)%m
+    evaller(f"f_{x//2%N}(i)")
+
+for f, n in stats.items():
+    print(f.__name__, n)

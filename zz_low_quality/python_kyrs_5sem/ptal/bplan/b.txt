@@ -1,0 +1,10 @@
+conv = eval(input())	t	conv = eval(input())
+cov_tur = []		cov_tur = []
+for i in conv:		for i in conv:
+    if type(i) != int:		    if type(i) != int:
+        [cov_tur.append(j) for j in i]		        [cov_tur.append(j) for j in i]
+    elif i <= len(cov_tur):		    elif i <= len(cov_tur):
+        print(tuple(cov_tur[:i]))		        print(tuple(cov_tur[:i]))
+        cov_tur = cov_tur[i:]		        cov_tur = cov_tur[i:]
+    else:		    else:
+1        break		1        break
