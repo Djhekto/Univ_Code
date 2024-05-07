@@ -1,0 +1,11 @@
+**/trash/
+**/chisl_metod/*/trash/
+**/chisl_metod/*/*/trash/
+**/chisl_metod/*/*/*/trash/
+trash
+
+.vscode/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
